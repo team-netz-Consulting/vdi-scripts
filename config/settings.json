@@ -1,6 +1,6 @@
 {
   "defaultAction": "InstallVDA",
-  "scriptRoot": "src/scripts",
+  "scriptRoot": "vdi-scripts/src/scripts",
   "actions": [
     {
       "key": "InstallCalculator",
