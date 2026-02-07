@@ -32,7 +32,20 @@ if (-not (Test-Path $settingsFile)) {
 }
 
 # JSON laden
-$settings = Get-Content $settingsFile -Raw | ConvertFrom-Json
+# JSON mit optionalen Kommentaren (// ... und /* ... */) tolerant einlesen
+$jsonRaw = Get-Content $settingsFile -Raw
+
+# Block-Kommentare entfernen: /* ... */
+$jsonRaw = [regex]::Replace($jsonRaw, '/\*.*?\*/', '', 'Singleline')
+
+# Zeilen-Kommentare entfernen: // ...
+$jsonRaw = [regex]::Replace($jsonRaw, '^\s*//.*$', '', 'Multiline')
+
+# Trailing commas entfernen (optional, falls vorhanden)
+$jsonRaw = [regex]::Replace($jsonRaw, ',(\s*[}\]])', '$1')
+
+$settings = $jsonRaw | ConvertFrom-Json
+
 
 # scriptRoot bestimmen
 $scriptRootRel = $settings.scriptRoot
