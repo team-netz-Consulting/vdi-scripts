@@ -1,4 +1,4 @@
-# bootstrap\main.ps1
+﻿# bootstrap\main.ps1
 <#
 .SYNOPSIS
   Bootstrapper: lädt/aktualisiert das Repo und startet das Entry-Skript.
