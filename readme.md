@@ -157,6 +157,19 @@ Kein Download, nur Auflisten / Logging / optional Export
 
 ---
 
+## Bootstrapper herunterladen (wget)
+
+Der Einstieg in die Automatisierung erfolgt über den **Bootstrapper (`main.ps1`)**.  
+Er lädt und aktualisiert alle weiteren Skripte automatisch.
+
+### Download mit `wget` (empfohlen)
+
+```bash
+wget https://raw.githubusercontent.com/team-netz-Consulting/vdi-scripts/main/bootstrap/main.ps1
+
+## Start des Bootstrappers
+powershell -NoProfile -ExecutionPolicy Bypass -File .\main.ps1
+
 ## Zielgruppe / Einsatz
 
 - VDI / RDS Umgebungen
