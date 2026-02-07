@@ -9,9 +9,7 @@ param(
 
     # Option 7: Non-Interactive/Verbose/Force/WhatIf
     [switch]$NonInteractive,
-    [switch]$Force,
-    [switch]$WhatIf,
-    [switch]$Verbose
+    [switch]$Force
 )
 
 Set-StrictMode -Version Latest
@@ -73,24 +71,21 @@ function Resolve-ScriptPath([string]$scriptValue) {
 }
 
 function Build-CommonArgs {
-    # Option 7: Standard-Parameter, die wir an Unter-Skripte weiterreichen
-    # Voraussetzung: Unter-Skripte akzeptieren diese Parameter (oder du ignorierst unbekannte mit param(...) / [CmdletBinding()] + $PSBoundParameters)
     $list = @(
         "-ConfigDir", $ConfigDir,
         "-LogDir", $LogDir
     )
 
-    if ($Force)      { $list += "-Force" }
-    if ($WhatIf)     { $list += "-WhatIf" }
-    if ($Verbose)    { $list += "-Verbose" }
-    if ($NonInteractive) {
-        $list += "-NonInteractive"
-        # Optional: viele Cmdlets respektieren -Confirm:$false, wenn Script mit SupportsShouldProcess arbeitet
-        $list += "-Confirm:$false"
-    }
+    if ($Force) { $list += "-Force" }
+    if ($NonInteractive) { $list += "-NonInteractive"; $list += "-Confirm:$false" }
+
+    # Common Parameter korrekt “durchreichen”
+    if ($PSBoundParameters.ContainsKey('Verbose')) { $list += "-Verbose" }
+    if ($WhatIfPreference) { $list += "-WhatIf" }
 
     return $list
 }
+
 
 function Run-Action([string]$key) {
     if (-not $actionMap.ContainsKey($key)) { throw "Unbekannte Aktion: $key" }

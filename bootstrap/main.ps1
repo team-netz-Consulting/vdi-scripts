@@ -32,13 +32,18 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
-# --- UTF-8 Console Fix ---
 try {
+    # Console auf UTF-8
     chcp 65001 | Out-Null
-    [Console]::InputEncoding  = [System.Text.Encoding]::UTF8
-    [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
-    $OutputEncoding           = [System.Text.Encoding]::UTF8
+    [Console]::InputEncoding  = [Text.Encoding]::UTF8
+    [Console]::OutputEncoding = [Text.Encoding]::UTF8
+    $OutputEncoding           = [Text.Encoding]::UTF8
 } catch {}
+
+# Logs immer sauber in UTF-8
+$PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'
+$PSDefaultParameterValues['Set-Content:Encoding'] = 'utf8'
+
 
 # Repo-Informationen
 $RepoOwner = "team-netz-Consulting"
