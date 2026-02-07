@@ -6,7 +6,7 @@
       "key": "InstallCalculator",
       "name": "Install Calculator",
       "script": "install-calculator-provisioning.ps1",
-      "args": []
+      "args": ["-Action","menu"]
     },
     {
       "key": "InstallTeams",
