@@ -151,6 +151,7 @@ if ($Action) {
 # ---------------------------
 # Interaktives Hauptmenü
 # ---------------------------
+
 while ($true) {
     $catItems = @()
     foreach ($c in $categories) {
