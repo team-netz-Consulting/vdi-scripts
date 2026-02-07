@@ -5,25 +5,25 @@
     {
       "key": "InstallCalculator",
       "name": "Install Calculator",
-      "script": "install-calculator-provisioning",
+      "script": "install-calculator-provisioning.ps1",
       "args": []
     },
     {
       "key": "InstallTeams",
       "name": "Install Teams 2.0",
-      "script": "install-teams2-0",
+      "script": "install-teams2-0.ps1",
       "args": ["-SomeTeamsFlag", "Value"]
     },
     {
       "key": "InstallVDA",
       "name": "Install VDA 2507",
-      "script": "install-vda2507",
+      "script": "install-vda2507.ps1",
       "args": []
     },
     {
       "key": "EdgeUpdate",
       "name": "Manage Edge Update",
-      "script": "manage-edge-update",
+      "script": "manage-edge-update.ps1",
       "args": []
     }
   ]
