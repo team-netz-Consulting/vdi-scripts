@@ -1,0 +1,40 @@
+{
+  "defaultAction": "InstallVDA",
+  "scriptRoot": "src/scripts",
+  "actions": [
+    {
+      "key": "InstallCalculator",
+      "name": "Install Calculator",
+      "script": "install-calculator-provisioning",
+      "args": []
+    },
+    {
+      "key": "InstallTeams",
+      "name": "Install Teams 2.0",
+      "script": "install-teams2-0",
+      "args": ["-SomeTeamsFlag", "Value"]
+    },
+    {
+      "key": "InstallVDA",
+      "name": "Install VDA 2507",
+      "script": "install-vda2507",
+      "args": []
+    },
+    {
+      "key": "EdgeUpdate",
+      "name": "Manage Edge Update",
+      "script": "manage-edge-update",
+      "args": []
+    }
+  ]
+}
+
+
+/* {
+  "actions": [
+    { "key":"CalcStatus", "name":"Calculator Status", "script":"install-calculator-provisioning.ps1", "args":["-Action","status","-NonInteractive"] },
+    { "key":"CalcInstall", "name":"Calculator Install", "script":"install-calculator-provisioning.ps1", "args":["-Action","install","-NonInteractive"] },
+    { "key":"CalcUpdate", "name":"Calculator Update", "script":"install-calculator-provisioning.ps1", "args":["-Action","update","-NonInteractive"] },
+    { "key":"CalcRemove", "name":"Calculator Remove", "script":"install-calculator-provisioning.ps1", "args":["-Action","remove","-NonInteractive"] }
+  ]
+} */
