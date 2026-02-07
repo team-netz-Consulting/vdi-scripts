@@ -162,7 +162,7 @@ while ($true) {
         }
     }
 
-    $pickedCat = Show-Menu "VDI Scripts – Auswahl" $catItems
+    $pickedCat = Show-Menu "VDI Scripts - Auswahl" $catItems
     if (-not $pickedCat) { exit 0 }
 
     $cat = $pickedCat.Raw
@@ -184,7 +184,7 @@ while ($true) {
 
         $code = Run-ActionByKey $pickedAction.Key
 
-        # damit man Output lesen kann, bevor es zurück ins Menü geht
-        Read-Host "Enter zum Zurueckkehren"
+        # Pause before returning to menu
+        Read-Host "Press Enter to return" | Out-Null
     }
 }
