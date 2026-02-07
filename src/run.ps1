@@ -179,7 +179,7 @@ while ($true) {
     }
 
     while ($true) {
-        $pickedAction = Show-Menu ("{0} – Aktionen" -f $cat.name) $subItems
+        $pickedAction = Show-Menu ("{0} - Aktionen" -f $cat.name) $subItems
         if (-not $pickedAction) { break }
 
         $code = Run-ActionByKey $pickedAction.Key
