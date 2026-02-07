@@ -105,28 +105,32 @@ function Run-Action([string]$key) {
 
     $a = $actionMap[$key]
     $scriptPath = Resolve-ScriptPath $a.script
-
     if (-not (Test-Path $scriptPath)) { throw "Script nicht gefunden: $scriptPath" }
 
     $common = Build-CommonArgs
-
-    # Zusätzliche Args aus config
-    $extra = @()
+    $extra  = @()
     if ($a.args) { $extra = @($a.args) }
 
-    # Start in eigener PowerShell, damit ExitCodes sauber sind
+    # Argumente als echtes Array (wichtig für Pfade mit Leerzeichen)
     $argList = @(
         "-NoProfile",
         "-ExecutionPolicy", "Bypass",
         "-File", $scriptPath
     ) + $common + $extra
 
+    # Debug-Ausgabe (hilft beim Nachvollziehen)
+    $pretty = ($argList | ForEach-Object { if ($_ -match '\s') { '"' + $_ + '"' } else { $_ } }) -join ' '
     Write-Host "Starte Action '$key' -> $scriptPath"
-    if ($extra.Count -gt 0) { Write-Host ("Extra args: " + ($extra -join " ")) }
+    Write-Host "CMD: powershell.exe $pretty"
 
-    $p = Start-Process -FilePath "powershell.exe" -ArgumentList $argList -Wait -PassThru
-    return $p.ExitCode
+    # Direkt ausführen: Output/Fehler sichtbar, ExitCode über $LASTEXITCODE
+    & powershell.exe @argList
+    $code = $LASTEXITCODE
+
+    if ($code -ne 0) { Write-Warning "Action '$key' ExitCode=$code" }
+    return $code
 }
+
 
 # Non-Interactive: Wenn keine Action angegeben, versuche defaultAction
 if ($NonInteractive -and -not $Action) {
