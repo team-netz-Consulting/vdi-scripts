@@ -165,7 +165,8 @@ Er lädt und aktualisiert alle weiteren Skripte automatisch.
 ### Download mit `wget` (empfohlen)
 
 ```bash
-wget https://raw.githubusercontent.com/team-netz-Consulting/vdi-scripts/main/bootstrap/main.ps1
+wget https://raw.githubusercontent.com/team-netz-Consulting/vdi-scripts/refs/heads/master/bootstrap/main.ps1 -OutFile .\main.ps1 -UseBasicParsing
+```
 
 ## Start des Bootstrappers
 powershell -NoProfile -ExecutionPolicy Bypass -File .\main.ps1
