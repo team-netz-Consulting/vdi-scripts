@@ -185,6 +185,6 @@ while ($true) {
         $code = Run-ActionByKey $pickedAction.Key
 
         # damit man Output lesen kann, bevor es zurück ins Menü geht
-        Read-Host "Enter zum Zurückkehren" | Out-Null
+        Read-Host "Enter zum Zurückkehren" | Out-Null        
     }
 }
