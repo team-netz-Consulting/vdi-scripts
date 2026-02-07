@@ -1,40 +1,73 @@
 {
   "defaultAction": "InstallVDA",
   "scriptRoot": "vdi-scripts/src/scripts",
-  "actions": [
+  "categories": [
     {
-      "key": "InstallCalculator",
-      "name": "Install Calculator",
-      "script": "install-calculator-provisioning.ps1",
-      "args": ["-Action","menu"]
+      "key": "Calculator",
+      "name": "Calculator",
+      "items": [
+        {
+          "key": "CalcStatus",
+          "name": "Status anzeigen",
+          "script": "install-calculator-provisioning.ps1",
+          "args": ["-Action", "status", "-NonInteractive"]
+        },
+        {
+          "key": "CalcInstall",
+          "name": "Install / Repair",
+          "script": "install-calculator-provisioning.ps1",
+          "args": ["-Action", "install", "-NonInteractive"]
+        },
+        {
+          "key": "CalcUpdate",
+          "name": "Update (Reprovision)",
+          "script": "install-calculator-provisioning.ps1",
+          "args": ["-Action", "update", "-NonInteractive"]
+        },
+        {
+          "key": "CalcRemove",
+          "name": "Remove (Provisioning entfernen)",
+          "script": "install-calculator-provisioning.ps1",
+          "args": ["-Action", "remove", "-NonInteractive"]
+        }
+      ]
     },
     {
-      "key": "InstallTeams",
-      "name": "Install Teams 2.0",
-      "script": "install-teams2-0.ps1",
-      "args": ["-SomeTeamsFlag", "Value"]
+      "key": "Edge",
+      "name": "Microsoft Edge",
+      "items": [
+        {
+          "key": "EdgeUpdate",
+          "name": "Manage Edge Update",
+          "script": "manage-edge-update.ps1",
+          "args": ["-NonInteractive"]
+        }
+      ]
     },
     {
-      "key": "InstallVDA",
-      "name": "Install VDA 2507",
-      "script": "install-vda2507.ps1",
-      "args": []
+      "key": "Teams",
+      "name": "Microsoft Teams",
+      "items": [
+        {
+          "key": "TeamsInstall",
+          "name": "Install Teams 2.0",
+          "script": "install-teams2-0.ps1",
+          "args": ["-NonInteractive"]
+        }
+      ]
     },
     {
-      "key": "EdgeUpdate",
-      "name": "Manage Edge Update",
-      "script": "manage-edge-update.ps1",
-      "args": []
+      "key": "VDA",
+      "name": "Citrix VDA",
+      "items": [
+        {
+          "key": "VDAInstall",
+          "name": "Install VDA 2507",
+          "script": "install-vda2507.ps1",
+          "args": ["-NonInteractive"]
+        }
+      ]
     }
   ]
 }
 
-
-/* {
-  "actions": [
-    { "key":"CalcStatus", "name":"Calculator Status", "script":"install-calculator-provisioning.ps1", "args":["-Action","status","-NonInteractive"] },
-    { "key":"CalcInstall", "name":"Calculator Install", "script":"install-calculator-provisioning.ps1", "args":["-Action","install","-NonInteractive"] },
-    { "key":"CalcUpdate", "name":"Calculator Update", "script":"install-calculator-provisioning.ps1", "args":["-Action","update","-NonInteractive"] },
-    { "key":"CalcRemove", "name":"Calculator Remove", "script":"install-calculator-provisioning.ps1", "args":["-Action","remove","-NonInteractive"] }
-  ]
-} */
