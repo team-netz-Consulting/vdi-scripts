@@ -5,6 +5,15 @@
 
 USAGE:
   powershell -NoProfile -ExecutionPolicy Bypass -File .\main.ps1
+
+.NOTES
+    Author:        team-netz Consulting GmbH
+    Version:       1.0
+    Created on:    07.02.2026
+
+.REQUIREMENTS
+    - PowerShell 5.1+
+    - Internetzugang  
 #>
 
 [CmdletBinding()]
@@ -12,19 +21,24 @@ param(
     [switch]$NoUpdate,
     [ValidateSet("BranchZip","Release")]
     [string]$UpdateMode = "BranchZip",
-    [string]$Branch = "main",
+    [string]$Branch = "master",
 
-    # Ziel: Program Files\TeamNetz\vdi-scripts
-    [string]$InstallRoot = (Join-Path $env:ProgramFiles "TeamNetz\vdi-scripts"),
+    # Ziel: Program Files\Team-Netz\vdi-scripts
+    [string]$InstallRoot = (Join-Path $env:ProgramFiles "Team-Netz\vdi-scripts"),
 
     [string]$EntryScript = "src\run.ps1"   # relativ zum InstallRoot
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
-chcp 65001 | Out-Null
-[Console]::OutputEncoding = [Text.Encoding]::UTF8
-$OutputEncoding = [Text.Encoding]::UTF8
+
+# --- UTF-8 Console Fix ---
+try {
+    chcp 65001 | Out-Null
+    [Console]::InputEncoding  = [System.Text.Encoding]::UTF8
+    [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+    $OutputEncoding           = [System.Text.Encoding]::UTF8
+} catch {}
 
 # Repo-Informationen
 $RepoOwner = "team-netz-Consulting"
@@ -99,10 +113,33 @@ function Update-Scripts {
         return
     }
 
-    $zip = Download-BranchZip -BranchName $Branch
+    # BranchZip: wenn Branch nicht existiert oder "main" falsch ist -> Default-Branch automatisch nutzen
+    $useBranch = $Branch
+    if ([string]::IsNullOrWhiteSpace($useBranch)) {
+        $useBranch = Get-DefaultBranch
+    }
+
+    try {
+        $zip = Download-BranchZip -BranchName $useBranch
+    }
+    catch {
+        Write-Host "Branch '$useBranch' nicht verfügbar. Versuche Default-Branch automatisch..." -ForegroundColor Yellow
+        $useBranch = Get-DefaultBranch
+        $zip = Download-BranchZip -BranchName $useBranch
+    }
+
     $root = Expand-ZipToStaging -ZipPath $zip
     Sync-Folder -SourceDir $root -TargetDir $CurrentDir | Out-Null
-    (Get-Date -Format "yyyyMMdd-HHmmss") | Out-File -FilePath (Join-Path $CurrentDir "VERSION.txt") -Encoding UTF8
+
+    ("branch-{0}-{1}" -f $useBranch, (Get-Date -Format "yyyyMMdd-HHmmss")) |
+        Out-File -FilePath (Join-Path $CurrentDir "VERSION.txt") -Encoding UTF8
+}
+
+
+function Get-DefaultBranch {
+    $apiUrl = "https://api.github.com/repos/$RepoOwner/$RepoName"
+    $repo = Invoke-RestMethod -Uri $apiUrl -Headers @{ "User-Agent" = "PowerShell" }
+    return $repo.default_branch
 }
 
 try {
