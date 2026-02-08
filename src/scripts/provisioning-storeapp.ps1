@@ -138,9 +138,7 @@ function Load-From-ConfigByActionKey {
     $ctx = Resolve-RepoRoots
     $settings = $ctx.Settings
     $scriptRootPath = $ctx.ScriptRoot
-
-    # configDir ist <repoRoot>\config, daher repoRoot = parent(configDir)
-    $repoRoot = (Resolve-Path (Join-Path $ConfigDir "..")).Path
+    $repoRoot = $ctx.RepoRoot
 
     # ActionKey "Category.Item"
     $parts = $Key.Split('.', 2)
@@ -218,7 +216,7 @@ function Show-Status([string]$name, [string]$appPath, [string[]]$depPaths) {
         Write-Host "AppPackage: (nicht gesetzt)" -ForegroundColor Yellow
     }
 
-    if ($depPaths -and $depPaths.Count -gt 0) {
+    if (@($depPaths).Count -gt 0) {
         Write-Host "Dependencies:"
         foreach ($p in $depPaths) {
             Write-Host (" - {0} | Exists={1}" -f $p, (Test-Path $p))
@@ -264,7 +262,7 @@ function Provision-StoreApp {
     }
 
     # Dependencies zuerst
-    if ($DepPaths -and $DepPaths.Count -gt 0) {
+    if (@($DepPaths).Count -gt 0) {
         foreach ($dp in $DepPaths) {
             try {
                 if ($PSCmdlet.ShouldProcess("Online Image", "Add provisioned dependency: $([IO.Path]::GetFileName($dp))")) {

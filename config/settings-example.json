@@ -36,12 +36,12 @@
               "dependencies": [
                 {
                   "id": "Microsoft.VCLibs.140.00",
-                  "path": "packages/Microsoft.VCLibs.140.00/Microsoft.VCLibs.x64.14.00.appx"
+                  "path": "packages/9wzdncrfhvn5/Dependencies/Microsoft.VCLibs.140.00_14.0.33519.0_Universal_X64.appx"
                 }
               ],
               "app": {
-                "id": "9NKSQGP7F2NH",
-                "path": "packages/9NKSQGP7F2NH/Microsoft.WindowsCalculator.msixbundle"
+                "id": "9wzdncrfhvn5",
+                "path": "packages/9wzdncrfhvn5/Microsoft.WindowsCalculator_2021.2508.4.0_Universal_X86.X64.Arm64.msixbundle"
               }
             }
           }
@@ -57,12 +57,12 @@
               "dependencies": [
                 {
                   "id": "Microsoft.VCLibs.140.00",
-                  "path": "packages/Microsoft.VCLibs.140.00/Microsoft.VCLibs.x64.14.00.appx"
+                  "path": "packages/9wzdncrfhvn5/Dependencies/Microsoft.VCLibs.140.00_14.0.33519.0_Universal_X64.appx"
                 }
               ],
               "app": {
-                "id": "9NKSQGP7F2NH",
-                "path": "packages/9NKSQGP7F2NH/Microsoft.WindowsCalculator.msixbundle"
+                "id": "9wzdncrfhvn5",
+                "path": "packages/9wzdncrfhvn5/Microsoft.WindowsCalculator_2021.2508.4.0_Universal_X86.X64.Arm64.msixbundle"
               }
             }
           }
