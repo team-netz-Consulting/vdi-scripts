@@ -129,8 +129,14 @@ function Run-ActionByKey([string]$fullKey) {
     Write-Host "Starte Action '$fullKey' -> $scriptPath"
     Write-Host "CMD: powershell.exe $pretty"
 
-    & powershell.exe @argList
+<#     & powershell.exe @argList
     $code = $LASTEXITCODE
+    if ($code -ne 0) { Write-Warning "Action '$fullKey' ExitCode=$code" }
+    return $code #>
+    # Subprozess im gleichen Fenster ausführen (Output zuverlässig sichtbar)
+
+    $p = Start-Process -FilePath "powershell.exe" -ArgumentList $argList -NoNewWindow -Wait -PassThru
+    $code = $p.ExitCode
     if ($code -ne 0) { Write-Warning "Action '$fullKey' ExitCode=$code" }
     return $code
 }
