@@ -5,7 +5,7 @@
 
 
         Dieses Skript dient als zentrales Download-Modul für Microsoft-Store-Apps.
-        Es liest die zu ladenden Pakete aus der zentralen config.json und speichert
+        Es liest die zu ladenden Pakete aus der zentralen settings.json und speichert
         die Artefakte standardisiert unterhalb von <scriptRoot>/packages/<PackageId>/.
 
         Das Skript ist Orchestrator-kompatibel (src/run.ps1) und kann interaktiv oder
@@ -16,7 +16,7 @@
         von winget (Source: msstore) lokal herunter, ohne sie zu installieren.
 
         Die zu ladenden Pakete werden in der Datei:
-            ../../config/config.json
+            ../../config/settings.json
 
         im Abschnitt "storePackages" definiert.
 
@@ -30,7 +30,7 @@
         - RDS / VDI / Server Core Szenarien
 
     .EXAMPLE
-        # Alle in der config.json aktivierten Store-Pakete herunterladen
+        # Alle in der settings.json aktivierten Store-Pakete herunterladen
         .\download-storeapp.ps1
 
     .EXAMPLE
@@ -55,7 +55,7 @@
         Version 1.0 - 07.02.2026
         - Initial script created
         - Unterstützung für winget download (msstore)
-        - Zentrale Steuerung über config.json
+        - Zentrale Steuerung über settings.json
         - Standardisierte Paketablage unter scriptRoot/packages/
 
     .REQUIREMENTS
@@ -170,7 +170,7 @@ function Invoke-WinGetDownload {
 # ----------------- MAIN -----------------
 
 $scriptDir = Get-ScriptRootPath
-$configPath = Join-Path $scriptDir "..\..\config\config.json"
+$configPath = Join-Path $scriptDir "..\..\config\settings.json"
 $configPath = (Resolve-Path $configPath).Path
 
 $config = Load-Config -ConfigPath $configPath
@@ -180,7 +180,7 @@ if (-not $config.scriptRoot) {
 }
 
 # ScriptRoot in config ist relativ zum Repo-Root; wir leiten Repo-Root aus config location ab:
-# config liegt in <repoRoot>\config\config.json
+# config liegt in <repoRoot>\config\settings.json
 $repoRoot = Split-Path -Parent (Split-Path -Parent $configPath)
 $scriptRootPath = Join-Path $repoRoot $config.scriptRoot
 $scriptRootPath = (Resolve-Path $scriptRootPath).Path
