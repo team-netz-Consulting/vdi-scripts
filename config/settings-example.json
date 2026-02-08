@@ -1,0 +1,118 @@
+{
+  "defaultAction": "InstallVDA",
+  "scriptRoot": "src/scripts",
+
+  "storePackages": [
+    {
+      "id": "9NKSQGP7F2NH",
+      "name": "Windows Calculator",
+      "source": "msstore",
+      "enabled": true
+    }
+  ],
+
+  "categories": [
+    {
+      "key": "Calculator",
+      "name": "Calculator",
+      "items": [
+        {
+          "key": "CalcStatus",
+          "name": "Status anzeigen",
+          "script": "provisioning-storeapp.ps1",
+          "args": ["-Action", "status", "-NonInteractive"],
+          "storeApp": {
+            "displayName": "Microsoft.WindowsCalculator"
+          }
+        },
+        {
+          "key": "CalcInstall",
+          "name": "Install / Repair",
+          "script": "provisioning-storeapp.ps1",
+          "args": ["-Action", "install", "-NonInteractive"],
+          "storeApp": {
+            "displayName": "Microsoft.WindowsCalculator",
+            "packages": {
+              "dependencies": [
+                {
+                  "id": "Microsoft.VCLibs.140.00",
+                  "path": "packages/Microsoft.VCLibs.140.00/Microsoft.VCLibs.x64.14.00.appx"
+                }
+              ],
+              "app": {
+                "id": "9NKSQGP7F2NH",
+                "path": "packages/9NKSQGP7F2NH/Microsoft.WindowsCalculator.msixbundle"
+              }
+            }
+          }
+        },
+        {
+          "key": "CalcUpdate",
+          "name": "Update (Reprovision)",
+          "script": "provisioning-storeapp.ps1",
+          "args": ["-Action", "update", "-NonInteractive"],
+          "storeApp": {
+            "displayName": "Microsoft.WindowsCalculator",
+            "packages": {
+              "dependencies": [
+                {
+                  "id": "Microsoft.VCLibs.140.00",
+                  "path": "packages/Microsoft.VCLibs.140.00/Microsoft.VCLibs.x64.14.00.appx"
+                }
+              ],
+              "app": {
+                "id": "9NKSQGP7F2NH",
+                "path": "packages/9NKSQGP7F2NH/Microsoft.WindowsCalculator.msixbundle"
+              }
+            }
+          }
+        },
+        {
+          "key": "CalcRemove",
+          "name": "Remove (Provisioning entfernen)",
+          "script": "provisioning-storeapp.ps1",
+          "args": ["-Action", "remove", "-NonInteractive"],
+          "storeApp": {
+            "displayName": "Microsoft.WindowsCalculator"
+          }
+        }
+      ]
+    },
+    {
+      "key": "Edge",
+      "name": "Microsoft Edge",
+      "items": [
+        {
+          "key": "EdgeUpdate",
+          "name": "Manage Edge Update",
+          "script": "manage-edge-update.ps1",
+          "args": ["-NonInteractive"]
+        }
+      ]
+    },
+    {
+      "key": "Teams",
+      "name": "Microsoft Teams",
+      "items": [
+        {
+          "key": "TeamsInstall",
+          "name": "Install Teams 2.0",
+          "script": "install-teams2-0.ps1",
+          "args": ["-NonInteractive"]
+        }
+      ]
+    },
+    {
+      "key": "VDA",
+      "name": "Citrix VDA",
+      "items": [
+        {
+          "key": "VDAInstall",
+          "name": "Install VDA 2507",
+          "script": "install-vda2507.ps1",
+          "args": ["-NonInteractive"]
+        }
+      ]
+    }
+  ]
+}

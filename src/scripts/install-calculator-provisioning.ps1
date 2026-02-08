@@ -50,6 +50,15 @@ param(
     [switch]$Force
 )
 
+try {
+    # Console auf UTF-8
+    chcp 65001 | Out-Null
+    [Console]::InputEncoding  = [Text.Encoding]::UTF8
+    [Console]::OutputEncoding = [Text.Encoding]::UTF8
+    $OutputEncoding           = [Text.Encoding]::UTF8
+} catch {}
+
+
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
@@ -59,7 +68,7 @@ $ErrorActionPreference = "Stop"
 $AppDisplayName = "Microsoft.WindowsCalculator"
 
 # Download-URIs
-$CalcUri   = "http://tlu.dl.delivery.mp.microsoft.com/filestreamingservice/files/ea3bc611-fa15-49e6-b10a-23b0769c6a7e?P1=1770402309&P2=404&P3=2&P4=lHkpsZpZ5VI7Ns4yL2cZklgTQvou9GSaK26rJOc2Sy%2fbhSoPxN3CG85gMGQ3zyQlcM5RrPm8WXu2MqYeWmw9YA%3d%3d"
+$CalcUri   = "http://tlu.dl.delivery.mp.microsoft.com/filestreamingservice/files/ea3bc611-fa15-49e6-b10a-23b0769c6a7e?P1=1770546158&P2=404&P3=2&P4=mi0wLwwjM8XiXFDlIuvkd7xU6Vfp1d4EBiMmpI16222VHDPUsWtvXjduixZgQepQkS0pkHnsiHejvRphtAAbtA%3d%3d"
 $VCLibsUri = "https://aka.ms/Microsoft.VCLibs.x64.14.00.Desktop.appx"
 
 # Dateinamen

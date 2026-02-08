@@ -130,13 +130,52 @@ function Get-AppxDownloadUrls {
     return $links
 }
 
+function Download-AppxPackage {
+[CmdletBinding()]
+param (
+  [string]$Uri,
+  [string]$Path = "."
+)
+   
+  process {
+    $Path = (Resolve-Path $Path).Path
+    #Get Urls to download
+    $WebResponse = Invoke-WebRequest -UseBasicParsing -Method 'POST' -Uri 'https://store.rg-adguard.net/api/GetFiles' -Body "type=url&url=$Uri&ring=Retail" -ContentType 'application/x-www-form-urlencoded'
+    $LinksMatch = $WebResponse.Links | where {$_ -like '*.appx*' -or $_ -like '*.appxbundle*' -or $_ -like '*.msix*' -or $_ -like '*.msixbundle*'} | where {$_ -like '*_neutral_*' -or $_ -like "*_"+$env:PROCESSOR_ARCHITECTURE.Replace("AMD","X").Replace("IA","X")+"_*"} | Select-String -Pattern '(?<=a href=").+(?=" r)'
+    $DownloadLinks = $LinksMatch.matches.value 
+
+    function Resolve-NameConflict{
+    #Accepts Path to a FILE and changes it so there are no name conflicts
+    param(
+    [string]$Path
+    )
+        $newPath = $Path
+        if(Test-Path $Path){
+            $i = 0;
+            $item = (Get-Item $Path)
+            while(Test-Path $newPath){
+                $i += 1;
+                $newPath = Join-Path $item.DirectoryName ($item.BaseName+"($i)"+$item.Extension)
+            }
+        }
+        return $newPath
+    }
+    #Download Urls
+    foreach($url in $DownloadLinks){
+        Write-Host $url
+    }
+  }
+}
+
 # ------------------------------------------------------------
 # Region: Main
 # ------------------------------------------------------------
 Write-Log "=== Start | Script=$ScriptKeyName | StoreUrl=$StoreUrl ==="
 
 try {
-    $urls = Get-AppxDownloadUrls -Uri $StoreUrl
+
+    Download-AppxPackage -Uri "https://apps.microsoft.com/detail/9wzdncrfhvn5"
+  <#   $urls = Get-AppxDownloadUrls -Uri $StoreUrl
 
     if (-not $urls -or $urls.Count -eq 0) {
         Write-Log "Keine Download-URLs gefunden." "WARN"
@@ -154,7 +193,7 @@ try {
     if ($ExportFile) {
         $urls | Out-File -FilePath $ExportFile -Encoding UTF8 -Force
         Write-Log "URLs exportiert nach: $ExportFile" "OK"
-    }
+    } #>
 
     exit 0
 }

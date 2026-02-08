@@ -67,6 +67,20 @@ function Build-CommonArgs {
     return $list
 }
 
+function Script-SupportsActionKeyParam {
+    param([Parameter(Mandatory)][string]$ScriptPath)
+
+    try {
+        # Lightweight Check: suchen nach "ActionKey" im param()-Block
+        $txt = Get-Content -Path $ScriptPath -Raw -ErrorAction Stop
+        if ($txt -match '(?is)\bparam\s*\(.*?\bActionKey\b') { return $true }
+        return $false
+    } catch {
+        # Wenn nicht prüfbar: lieber nichts injizieren
+        return $false
+    }
+}
+
 # Actions-Lookup aufbauen: "Category.Item" -> actionObject
 $actionMap = @{}
 $categories = @()
@@ -99,6 +113,12 @@ function Run-ActionByKey([string]$fullKey) {
     $extra  = @()
     if ($a.args) { $extra = @($a.args) }
 
+    # NEW: ActionKey automatisch mitsenden, aber nur wenn Script es unterstützt
+    $injectActionKey = Script-SupportsActionKeyParam -ScriptPath $scriptPath
+    if ($injectActionKey) {
+        $common += @("-ActionKey", $fullKey)
+    }
+
     $argList = @(
         "-NoProfile",
         "-ExecutionPolicy", "Bypass",
@@ -109,7 +129,6 @@ function Run-ActionByKey([string]$fullKey) {
     Write-Host "Starte Action '$fullKey' -> $scriptPath"
     Write-Host "CMD: powershell.exe $pretty"
 
-    # im gleichen Host ausführen (robust für Output/Read-Host)
     & powershell.exe @argList
     $code = $LASTEXITCODE
     if ($code -ne 0) { Write-Warning "Action '$fullKey' ExitCode=$code" }
@@ -183,8 +202,6 @@ while ($true) {
         if (-not $pickedAction) { break }
 
         $code = Run-ActionByKey $pickedAction.Key
-
-        # Pause before returning to menu
         Read-Host "Press Enter to return" | Out-Null
     }
 }

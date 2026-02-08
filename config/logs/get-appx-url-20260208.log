@@ -1,0 +1,19 @@
+[2026-02-08 10:36:55][INFO] === Start | Script=GET-APPX-URL | StoreUrl="https://apps.microsoft.com/detail/9wzdncrfhvn5" ===
+[2026-02-08 10:36:56][INFO] Ermittle APPX/MSIX URLs für: "https://apps.microsoft.com/detail/9wzdncrfhvn5"
+[2026-02-08 10:36:56][ERROR] Fehler: You cannot call a method on a null-valued expression.
+[2026-02-08 10:36:56][INFO] === Ende ===
+[2026-02-08 10:40:10][INFO] === Start | Script=GET-APPX-URL | StoreUrl="https://apps.microsoft.com/detail/9wzdncrfhvn5" ===
+[2026-02-08 10:40:10][ERROR] Fehler: Response status code does not indicate success: 403 (Forbidden).
+[2026-02-08 10:40:10][INFO] === Ende ===
+[2026-02-08 10:41:56][INFO] === Start | Script=GET-APPX-URL | StoreUrl="https://apps.microsoft.com/detail/9wzdncrfhvn5" ===
+[2026-02-08 10:41:56][ERROR] Fehler: Response status code does not indicate success: 403 (Forbidden).
+[2026-02-08 10:41:56][INFO] === Ende ===
+[2026-02-08 10:42:13][INFO] === Start | Script=GET-APPX-URL | StoreUrl="https://apps.microsoft.com/detail/9wzdncrfhvn5" ===
+[2026-02-08 10:42:13][ERROR] Fehler: Response status code does not indicate success: 403 (Forbidden).
+[2026-02-08 10:42:13][INFO] === Ende ===
+[2026-02-08 10:44:27][INFO] === Start | Script=GET-APPX-URL | StoreUrl="https://apps.microsoft.com/detail/9wzdncrfhvn5" ===
+[2026-02-08 10:44:27][ERROR] Fehler: Response status code does not indicate success: 403 (Forbidden).
+[2026-02-08 10:44:27][INFO] === Ende ===
+[2026-02-08 10:45:25][INFO] === Start | Script=GET-APPX-URL | StoreUrl=jj ===
+[2026-02-08 10:45:25][ERROR] Fehler: Response status code does not indicate success: 403 (Forbidden).
+[2026-02-08 10:45:25][INFO] === Ende ===
