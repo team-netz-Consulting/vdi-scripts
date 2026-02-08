@@ -135,10 +135,20 @@ function Run-ActionByKey([string]$fullKey) {
     return $code #>
     # Subprozess im gleichen Fenster ausführen (Output zuverlässig sichtbar)
 
-    $p = Start-Process -FilePath "powershell.exe" -ArgumentList $argList -NoNewWindow -Wait -PassThru
+    # Subprozess im gleichen Fenster ausführen (Output zuverlässig sichtbar)
+    $argLine = ($argList | ForEach-Object {
+        if ($_ -match '\s' -or $_ -match '"') {
+            '"' + ($_ -replace '"','\"') + '"'
+        } else {
+            $_
+        }
+    }) -join ' '
+
+    $p = Start-Process -FilePath "powershell.exe" -ArgumentList $argLine -NoNewWindow -Wait -PassThru
     $code = $p.ExitCode
     if ($code -ne 0) { Write-Warning "Action '$fullKey' ExitCode=$code" }
     return $code
+
 }
 
 function Show-Menu($title, $items) {
