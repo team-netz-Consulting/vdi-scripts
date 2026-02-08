@@ -168,84 +168,94 @@ function Invoke-WinGetDownload {
 }
 
 # ----------------- MAIN -----------------
+try {
+        
+    $scriptDir = Get-ScriptRootPath
+    $configPath = Join-Path $scriptDir "..\..\config\settings.json"
+    $configPath = (Resolve-Path $configPath).Path
 
-$scriptDir = Get-ScriptRootPath
-$configPath = Join-Path $scriptDir "..\..\config\settings.json"
-$configPath = (Resolve-Path $configPath).Path
+    $config = Load-Config -ConfigPath $configPath
 
-$config = Load-Config -ConfigPath $configPath
-
-if (-not $config.scriptRoot) {
-    throw "Config-Fehler: 'scriptRoot' fehlt."
-}
-
-# ScriptRoot in config ist relativ zum Repo-Root; wir leiten Repo-Root aus config location ab:
-# config liegt in <repoRoot>\config\settings.json
-$repoRoot = Split-Path -Parent (Split-Path -Parent $configPath)
-$scriptRootPath = Join-Path $repoRoot $config.scriptRoot
-$scriptRootPath = (Resolve-Path $scriptRootPath).Path
-
-$packagesRoot = Join-Path $scriptRootPath "packages"
-Ensure-Directory -Path $packagesRoot
-
-# winget Mindestversion (download ist erst in neueren Versionen zuverlässig)
-$min = [version]"1.8.0"
-$ver = Get-WinGetVersion
-if ($ver -lt $min) {
-    throw "winget $ver ist zu alt. Bitte auf >= $min aktualisieren (App Installer)."
-}
-
-if (-not $config.storePackages) {
-    Write-Log "Keine 'storePackages' in config gefunden - nichts zu tun." "WARN"
-    exit 0
-}
-
-$pkgs = @($config.storePackages) | Where-Object { $_.enabled -ne $false }
-
-if (@($Ids).Count -gt 0) {
-    $pkgs = $pkgs | Where-Object { $Ids -contains $_.id }
-}
-
-if (@($pkgs).Count -eq 0) {
-    Write-Log "Keine passenden/enabled Store-Pakete gefunden." "WARN"
-    exit 0
-}
-
-Write-Log "RepoRoot: $repoRoot" "INFO"
-Write-Log "ScriptRoot (aus config): $scriptRootPath" "INFO"
-Write-Log "PackagesRoot: $packagesRoot" "INFO"
-Write-Log "winget version: $ver" "INFO"
-
-$errors = @()
-
-foreach ($p in @($pkgs)) {
-    $id = [string]$p.id
-    $name = if ($p.name) { [string]$p.name } else { $id }
-    $source = if ($p.source) { [string]$p.source } else { "msstore" }
-
-    $targetDir = Join-Path $packagesRoot $id
-    try {
-        Write-Log "Download: $name ($id) source=$source -> $targetDir" "INFO"
-
-        if ($Clean -and (Test-Path $targetDir)) {
-            Write-Log "Clean: Lösche vorhandene Dateien in $targetDir" "WARN"
-            Get-ChildItem -Path $targetDir -File -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
-        }
-
-        $files = Invoke-WinGetDownload -Id $id -Source $source -DownloadDir $targetDir
-
-        $fileList = $files | Select-Object -First 5 | ForEach-Object { $_.Name } | Sort-Object
-        Write-Log "OK: Download abgeschlossen. Dateien: $($fileList -join ', ')" "OK"
-    } catch {
-        $msg = "FEHLER bei $name ($id): $($_.Exception.Message)"
-        Write-Log $msg "ERROR"
-        $errors += $msg
-        if (-not $ContinueOnError) { break }
+    if (-not $config.scriptRoot) {
+        throw "Config-Fehler: 'scriptRoot' fehlt."
     }
-}
 
-if ($errors.Count -gt 0) {
-    throw ("Ein oder mehrere Downloads sind fehlgeschlagen:`n- " + ($errors -join "`n- "))
-}
+    # ScriptRoot in config ist relativ zum Repo-Root; wir leiten Repo-Root aus config location ab:
+    # config liegt in <repoRoot>\config\settings.json
+    $repoRoot = Split-Path -Parent (Split-Path -Parent $configPath)
+    $scriptRootPath = Join-Path $repoRoot $config.scriptRoot
+    $scriptRootPath = (Resolve-Path $scriptRootPath).Path
 
-Write-Log "Alle Downloads abgeschlossen." "OK"
+    $packagesRoot = Join-Path $scriptRootPath "packages"
+    Ensure-Directory -Path $packagesRoot
+
+    # winget Mindestversion (download ist erst in neueren Versionen zuverlässig)
+    $min = [version]"1.8.0"
+    $ver = Get-WinGetVersion
+    if ($ver -lt $min) {
+        throw "winget $ver ist zu alt. Bitte auf >= $min aktualisieren (App Installer)."
+    }
+
+    if (-not $config.storePackages) {
+        Write-Log "Keine 'storePackages' in config gefunden - nichts zu tun." "WARN"
+        exit 0
+    }
+
+    $pkgs = @($config.storePackages) | Where-Object { $_.enabled -ne $false }
+
+    if (@($Ids).Count -gt 0) {
+        $pkgs = $pkgs | Where-Object { $Ids -contains $_.id }
+    }
+
+    if (@($pkgs).Count -eq 0) {
+        Write-Log "Keine passenden/enabled Store-Pakete gefunden." "WARN"
+        exit 0
+    }
+
+    Write-Log "RepoRoot: $repoRoot" "INFO"
+    Write-Log "ScriptRoot (aus config): $scriptRootPath" "INFO"
+    Write-Log "PackagesRoot: $packagesRoot" "INFO"
+    Write-Log "winget version: $ver" "INFO"
+
+    $errors = @()
+
+    foreach ($p in @($pkgs)) {
+        $id = [string]$p.id
+        $name = if ($p.name) { [string]$p.name } else { $id }
+        $source = if ($p.source) { [string]$p.source } else { "msstore" }
+
+        $targetDir = Join-Path $packagesRoot $id
+        try {
+            Write-Log "Download: $name ($id) source=$source -> $targetDir" "INFO"
+
+            if ($Clean -and (Test-Path $targetDir)) {
+                Write-Log "Clean: Lösche vorhandene Dateien in $targetDir" "WARN"
+                Get-ChildItem -Path $targetDir -File -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
+            }
+
+            $files = Invoke-WinGetDownload -Id $id -Source $source -DownloadDir $targetDir
+
+            $fileList = $files | Select-Object -First 5 | ForEach-Object { $_.Name } | Sort-Object
+            Write-Log "OK: Download abgeschlossen. Dateien: $($fileList -join ', ')" "OK"
+        } catch {
+            $msg = "FEHLER bei $name ($id): $($_.Exception.Message)"
+            Write-Log $msg "ERROR"
+            $errors += $msg
+            if (-not $ContinueOnError) { break }
+        }
+    }
+
+    if ($errors.Count -gt 0) {
+        throw ("Ein oder mehrere Downloads sind fehlgeschlagen:`n- " + ($errors -join "`n- "))
+    }
+
+    Write-Log "Alle Downloads abgeschlossen." "OK"
+}
+catch {
+    Write-Host ""
+    Write-Host "=== ERROR DETAILS ===" -ForegroundColor Red
+    Write-Host $_.Exception.Message -ForegroundColor Red
+    Write-Host "At: $($_.InvocationInfo.ScriptName):$($_.InvocationInfo.ScriptLineNumber)" -ForegroundColor Yellow
+    Write-Host "Line: $($_.InvocationInfo.Line.Trim())" -ForegroundColor Yellow
+    throw
+}
