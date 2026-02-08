@@ -186,7 +186,7 @@ try {
     $scriptRootPath = Join-Path $repoRoot $config.scriptRoot
     $scriptRootPath = (Resolve-Path $scriptRootPath).Path
 
-    $packagesRoot = Join-Path $scriptRootPath "packages"
+    $packagesRoot = Join-Path $repoRoot "packages"
     Ensure-Directory -Path $packagesRoot
 
     # winget Mindestversion (download ist erst in neueren Versionen zuverlässig)

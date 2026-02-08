@@ -100,12 +100,14 @@ function Sync-Folder {
 
     # Robocopy mirror (robust). /NFL /NDL to reduce output
     $settingsPath = Join-Path $TargetDir "config\settings.json"
+    $packagesPath = Join-Path $TargetDir "packages"
 
     $robo = @(
         $SourceDir, $TargetDir,
         "/MIR", "/R:1", "/W:1",
         "/NFL", "/NDL", "/NP", "/NJH", "/NJS",
-        "/XF", $settingsPath
+        "/XF", $settingsPath,
+        "/XD", $packagesPath
     )
 
     $rc = & robocopy @robo
