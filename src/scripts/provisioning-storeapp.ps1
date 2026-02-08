@@ -162,14 +162,33 @@ function Load-From-ConfigByActionKey {
     $depPaths = @()
     $appPath  = $null
 
-    if ($sa.packages) {
-        if ($sa.packages.dependencies) {
+    # packages ist OPTIONAL (für status/remove ok)
+    if ($sa.PSObject.Properties.Name -contains 'packages' -and $sa.packages) {
+
+        if ($sa.packages.PSObject.Properties.Name -contains 'dependencies' -and $sa.packages.dependencies) {
             foreach ($d in @($sa.packages.dependencies)) {
-                if ($d.path) { $depPaths += (Resolve-Path (Join-Path $repoRoot $d.path)).Path }
+                if ($d -and ($d.PSObject.Properties.Name -contains 'path') -and $d.path) {
+                    $p = Join-Path $repoRoot $d.path
+                    if (Test-Path $p) {
+                        $depPaths += (Resolve-Path $p).Path
+                    } else {
+                        # Für status/remove tolerieren, für install/update später geprüft
+                        $depPaths += $p
+                    }
+                }
             }
         }
-        if ($sa.packages.app -and $sa.packages.app.path) {
-            $appPath = (Resolve-Path (Join-Path $repoRoot $sa.packages.app.path)).Path
+
+        if ($sa.packages.PSObject.Properties.Name -contains 'app' -and $sa.packages.app) {
+            if ($sa.packages.app.PSObject.Properties.Name -contains 'path' -and $sa.packages.app.path) {
+                $p = Join-Path $repoRoot $sa.packages.app.path
+                if (Test-Path $p) {
+                    $appPath = (Resolve-Path $p).Path
+                } else {
+                    # Für status/remove tolerieren, für install/update später geprüft
+                    $appPath = $p
+                }
+            }
         }
     }
 
@@ -412,3 +431,5 @@ catch {
 finally {
     Write-Log "=== Ende ===" "INFO"
 }
+
+
