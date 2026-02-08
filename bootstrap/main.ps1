@@ -99,7 +99,15 @@ function Sync-Folder {
     Ensure-Dir $TargetDir
 
     # Robocopy mirror (robust). /NFL /NDL to reduce output
-    $robo = @($SourceDir, $TargetDir, "/MIR", "/R:1", "/W:1", "/NFL", "/NDL", "/NP", "/NJH", "/NJS")
+    $settingsPath = Join-Path $TargetDir "config\settings.json"
+
+    $robo = @(
+        $SourceDir, $TargetDir,
+        "/MIR", "/R:1", "/W:1",
+        "/NFL", "/NDL", "/NP", "/NJH", "/NJS",
+        "/XF", $settingsPath
+    )
+
     $rc = & robocopy @robo
     # robocopy gibt verschiedene ExitCodes; wir behandeln nur 1..7 als normal (siehe robocopy docs)
     return $LASTEXITCODE
