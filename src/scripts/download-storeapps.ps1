@@ -69,7 +69,7 @@
 [CmdletBinding()]
 param(
     # Nur bestimmte IDs laden (wenn leer: alle enabled aus config)
-    [string[]]$Ids,
+    [string[]]$Ids = @(),
 
     # Zielordner pro Paket vor Download leeren
     [switch]$Clean,
@@ -203,7 +203,7 @@ try {
 
     $pkgs = @($config.storePackages) | Where-Object { $_.enabled -ne $false }
 
-    if (@($Ids).Count -gt 0) {
+    if ($Ids.Length -gt 0) {
         $pkgs = $pkgs | Where-Object { $Ids -contains $_.id }
     }
 
