@@ -196,7 +196,7 @@ if ($ver -lt $min) {
 }
 
 if (-not $config.storePackages) {
-    Write-Log "Keine 'storePackages' in config gefunden – nichts zu tun." "WARN"
+    Write-Log "Keine 'storePackages' in config gefunden - nichts zu tun." "WARN"
     exit 0
 }
 
