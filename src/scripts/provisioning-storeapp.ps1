@@ -139,6 +139,9 @@ function Load-From-ConfigByActionKey {
     $settings = $ctx.Settings
     $scriptRootPath = $ctx.ScriptRoot
 
+    # configDir ist <repoRoot>\config, daher repoRoot = parent(configDir)
+    $repoRoot = (Resolve-Path (Join-Path $ConfigDir "..")).Path
+
     # ActionKey "Category.Item"
     $parts = $Key.Split('.', 2)
     if ($parts.Count -ne 2) { throw "Ungültiger ActionKey '$Key'. Erwartet: Category.Item" }
@@ -164,11 +167,11 @@ function Load-From-ConfigByActionKey {
     if ($sa.packages) {
         if ($sa.packages.dependencies) {
             foreach ($d in @($sa.packages.dependencies)) {
-                if ($d.path) { $depPaths += (Resolve-Path (Join-Path $scriptRootPath $d.path)).Path }
+                if ($d.path) { $depPaths += (Resolve-Path (Join-Path $repoRoot $d.path)).Path }
             }
         }
         if ($sa.packages.app -and $sa.packages.app.path) {
-            $appPath = (Resolve-Path (Join-Path $scriptRootPath $sa.packages.app.path)).Path
+            $appPath = (Resolve-Path (Join-Path $repoRoot $sa.packages.app.path)).Path
         }
     }
 
