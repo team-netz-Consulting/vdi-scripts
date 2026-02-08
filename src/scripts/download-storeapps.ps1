@@ -202,11 +202,11 @@ if (-not $config.storePackages) {
 
 $pkgs = @($config.storePackages) | Where-Object { $_.enabled -ne $false }
 
-if ($Ids -and $Ids.Count -gt 0) {
+if (@($Ids).Count -gt 0) {
     $pkgs = $pkgs | Where-Object { $Ids -contains $_.id }
 }
 
-if (-not $pkgs -or $pkgs.Count -eq 0) {
+if (@($pkgs).Count -eq 0) {
     Write-Log "Keine passenden/enabled Store-Pakete gefunden." "WARN"
     exit 0
 }
@@ -218,7 +218,7 @@ Write-Log "winget version: $ver" "INFO"
 
 $errors = @()
 
-foreach ($p in $pkgs) {
+foreach ($p in @($pkgs)) {
     $id = [string]$p.id
     $name = if ($p.name) { [string]$p.name } else { $id }
     $source = if ($p.source) { [string]$p.source } else { "msstore" }
