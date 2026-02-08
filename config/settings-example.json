@@ -114,5 +114,17 @@
         }
       ]
     }
+    {
+      "key": "StoreApps",
+      "name": "StoreApps",
+      "items": [
+        {
+          "key": "DownloadStoreApps",
+          "name": "Download StoreApps",
+          "script": "download-storeapps.ps1",
+          "args": ["-NonInteractive"]
+        }
+      ]
+    }    
   ]
 }

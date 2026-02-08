@@ -31,19 +31,19 @@
 
     .EXAMPLE
         # Alle in der settings.json aktivierten Store-Pakete herunterladen
-        .\download-storeapp.ps1
+        .\download-storeapps.ps1
 
     .EXAMPLE
         # Nur ein bestimmtes Store-Paket herunterladen
-        .\download-storeapp.ps1 -Ids 9NKSQGP7F2NH
+        .\download-storeapps.ps1 -Ids 9NKSQGP7F2NH
 
     .EXAMPLE
         # Zielordner vor dem Download bereinigen
-        .\download-storeapp.ps1 -Clean
+        .\download-storeapps.ps1 -Clean
 
     .EXAMPLE
         # Fehler bei einem Paket ignorieren und mit dem nächsten fortfahren
-        .\download-storeapp.ps1 -ContinueOnError
+        .\download-storeapps.ps1 -ContinueOnError
 
     .NOTES
         Author:        team-netz Consulting GmbH
