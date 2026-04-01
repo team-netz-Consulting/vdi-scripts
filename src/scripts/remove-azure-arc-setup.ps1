@@ -276,19 +276,17 @@ function Do-Remove {
     }
 
     if ($PSCmdlet.ShouldProcess("System", "Remove $ScriptKeyName")) {
+
         Write-Log "Entferne Azure Arc Setup Capability..." "INFO"
 
-        $args = @(
-            "/Online"
-            "/Remove-Capability"
-            "/CapabilityName:$CapabilityName"
-            "/NoRestart"
-        )
-
-        $proc = Start-Process -FilePath "dism.exe" -ArgumentList $args -Wait -PassThru -WindowStyle Hidden
-
-        if ($proc.ExitCode -ne 0) {
-            throw "DISM Remove-Capability fehlgeschlagen. ExitCode=$($proc.ExitCode)"
+        try {
+            Remove-WindowsCapability `
+                -Name $CapabilityName `
+                -Online `
+                -ErrorAction Stop | Out-Null
+        }
+        catch {
+            throw "Remove-WindowsCapability fehlgeschlagen: $($_.Exception.Message)"
         }
 
         Write-Log "Azure Arc Setup wurde entfernt." "OK"
