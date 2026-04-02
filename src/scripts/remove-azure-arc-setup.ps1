@@ -233,25 +233,22 @@ function Do-Install {
     }
 
     if ($PSCmdlet.ShouldProcess("System", "Install $ScriptKeyName")) {
-        Write-Log "Installiere Azure Arc Setup Capability..." "INFO"
 
-        $args = @(
-            "/Online"
-            "/Add-Capability"
-            "/CapabilityName:$CapabilityName"
-            "/NoRestart"
-        )
+        Write-Log "Installiere Azure Arc Setup Capability (PowerShell)..." "INFO"
 
-        $proc = Start-Process -FilePath "dism.exe" -ArgumentList $args -Wait -PassThru -WindowStyle Hidden
-
-        if ($proc.ExitCode -ne 0) {
-            throw "DISM Add-Capability fehlgeschlagen. ExitCode=$($proc.ExitCode)"
+        try {
+            Add-WindowsCapability `
+                -Online `
+                -Name $CapabilityName `
+                -ErrorAction Stop | Out-Null
+        }
+        catch {
+            throw "Add-WindowsCapability fehlgeschlagen: $($_.Exception.Message)"
         }
 
         Write-Log "Azure Arc Setup wurde installiert." "OK"
     }
 }
-
 function Do-Update {
     [CmdletBinding(SupportsShouldProcess = $true)]
     param()
