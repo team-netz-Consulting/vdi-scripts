@@ -1,19 +1,7 @@
-#Requires -RunAsAdministrator
-
-<#
-.SYNOPSIS
-    Menüskript zum Anzeigen, Setzen und Rückgängig machen bestimmter Registry-Parameter.
-
-.HINWEIS
-    - Das Skript führt KEINEN Neustart durch.
-    - Nach dem Setzen oder Rückgängigmachen wird ein Neustart empfohlen.
-    - Vor dem ersten Setzen wird automatisch ein Backup der aktuellen Werte erstellt.
-#>
-
 [CmdletBinding()]
 param()
 
-$ErrorActionPreference = 'Stop'
+$ErrorActionPreference = 'Continue' # Wichtig: Verhindert sofortigen Abbruch bei kleinerem Fehler
 
 # ------------------------------------------------------------
 # Konfiguration
@@ -23,7 +11,6 @@ $BackupFolder = Join-Path $env:ProgramData 'RefsTuningTool'
 $BackupFile   = Join-Path $BackupFolder 'registry-backup.json'
 
 # Hier die gewünschten Zielwerte eintragen
-# Beispielwerte bitte an deine Vorgaben anpassen.
 $DesiredValues = @(
     @{
         Path  = 'HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem'
@@ -78,17 +65,24 @@ function Ensure-Admin {
     $principal = New-Object Security.Principal.WindowsPrincipal($currentIdentity)
 
     if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
-        Write-Host ''
         Write-Host 'Dieses Skript muss als Administrator ausgeführt werden.' -ForegroundColor Red
-        Write-Host ''
+        Write-Host 'Bitte starten Sie PowerShell als Admin und laden Sie das Skript neu.' -ForegroundColor Yellow
         Read-Host 'ENTER drücken zum Beenden'
         exit 1
     }
+    Write-Host 'Administrator-Rechte bestätigt.' -ForegroundColor Green
 }
 
 function Ensure-BackupFolder {
-    if (-not (Test-Path $BackupFolder)) {
-        New-Item -Path $BackupFolder -ItemType Directory -Force | Out-Null
+    try {
+        if (-not (Test-Path $BackupFolder)) {
+            Write-Host "Erstelle Verzeichnis: $BackupFolder" -ForegroundColor Cyan
+            New-Item -Path $BackupFolder -ItemType Directory -Force | Out-Null
+        }
+    }
+    catch {
+        Write-Host "Fehler beim Erstellen des Backup-Verzeichnisses: $_" -ForegroundColor Red
+        throw
     }
 }
 
@@ -155,10 +149,12 @@ function Show-CurrentValues {
 }
 
 function Backup-CurrentValues {
-    Ensure-BackupFolder
+    Ensure-BackupFolder # Nur Fehler abfangen, nicht throwen hier, um Script flow nicht zu blocken bei Schreibfehlern
 
+    # Prüfen ob Backup-Datei existiert
     if (Test-Path $BackupFile) {
         Write-Host "Backup-Datei existiert bereits: $BackupFile" -ForegroundColor Yellow
+        Write-Host 'Kein neues Backup erstellt.' -ForegroundColor Gray
         return
     }
 
@@ -173,8 +169,15 @@ function Backup-CurrentValues {
         }
     }
 
-    $backup | ConvertTo-Json -Depth 5 | Set-Content -Path $BackupFile -Encoding UTF8
-    Write-Host "Backup erstellt: $BackupFile" -ForegroundColor Green
+    try {
+        $jsonContent = $backup | ConvertTo-Json -Depth 5
+        Set-Content -Path $BackupFile -Value $jsonContent -Encoding UTF8 -ErrorAction Stop
+        Write-Host "Backup erfolgreich erstellt: $BackupFile" -ForegroundColor Green
+    }
+    catch {
+        Write-Host "Fehler beim Speichern des Backup in $BackupFile: $_" -ForegroundColor Red
+        throw
+    }
 }
 
 function Set-RegistryValueSafe {
@@ -193,26 +196,66 @@ function Set-RegistryValueSafe {
         $Value
     )
 
+    # Key-Path prüfen
     if (-not (Test-Path $Path)) {
         New-Item -Path $Path -Force | Out-Null
     }
 
-    New-ItemProperty -Path $Path -Name $Name -PropertyType $Type -Value $Value -Force | Out-Null
+    try {
+        # Wert setzen
+        New-ItemProperty -Path $Path -Name $Name -PropertyType $Type -Value $Value -Force | Out-Null
+        
+        # Debug-Check ob wirklich geschrieben wurde (manchmal sehr wichtig bei HKLM)
+        # Wenn Write-Host hier nicht steht, ist der Fehler oft unsichtbar
+        # Wir lassen den Fehler hier durch, damit das Hauptskript ihn fängt
+        
+        return $true
+    }
+    catch {
+        # Fehler zurückgeben statt auszuwerfen
+        return $false
+    }
 }
 
 function Apply-DesiredValues {
     Write-Host ''
     Write-Host 'Setze gewünschte Werte ...' -ForegroundColor Cyan
+    Write-Host 'Dies kann einige Sekunden dauern, wenn das Backup erstellt wird.'
 
-    Backup-CurrentValues
+    try {
+        Backup-CurrentValues
+    }
+    catch {
+        Write-Host 'Fehler während des Backups: $_' -ForegroundColor Red
+        Write-Host 'Die Werte werden NICHT gesetzt.' -ForegroundColor Red
+        return
+    }
+
+    $setCount = 0
+    $failCount = 0
 
     foreach ($entry in $DesiredValues) {
-        Set-RegistryValueSafe -Path $entry.Path -Name $entry.Name -Type $entry.Type -Value $entry.Value
-        Write-Host ("Gesetzt: {0} -> {1}\{2}" -f $entry.Value, $entry.Path, $entry.Name) -ForegroundColor Green
+        $success = Set-RegistryValueSafe -Path $entry.Path -Name $entry.Name -Type $entry.Type -Value $entry.Value
+
+        if ($success) {
+            Write-Host ("Gesetzt: {0} -> {1}\{2}" -f $entry.Value, $entry.Path, $entry.Name) -ForegroundColor Green
+            $setCount++
+        }
+        else {
+            # Fehlermeldung für den fehlgeschlagenen Eintrag
+            Write-Host ("FEHLER: Konnte Wert {0} nicht setzen." -f $entry.Name) -ForegroundColor Red
+            Write-Host "   Pfad: $Path" -ForegroundColor DarkYellow
+            Write-Host "   Grund: Es gibt eine Berechtigung oder einen Schreibfehler." -ForegroundColor DarkYellow
+            $failCount++
+        }
     }
 
     Write-Host ''
-    Write-Host 'Die Werte wurden gesetzt.' -ForegroundColor Green
+    Write-Host 'Zusammenfassung:' -ForegroundColor Cyan
+    Write-Host '   Erfolgreich: {0} Werte' -ForegroundColor Green -f $setCount
+    if ($failCount -gt 0) {
+        Write-Host '   Fehlerhaft: {0} Werte' -ForegroundColor Red -f $failCount
+    }
     Write-Host 'Ein Neustart wird empfohlen, aber NICHT automatisch ausgeführt.' -ForegroundColor Yellow
     Write-Host ''
 }
@@ -227,52 +270,63 @@ function Restore-FromBackup {
         return
     }
 
-    Write-Host 'Stelle Werte aus dem Backup wieder her ...' -ForegroundColor Cyan
+    try {
+        Write-Host 'Stelle Werte aus dem Backup wieder her ...' -ForegroundColor Cyan
 
-    $backupEntries = Get-Content -Path $BackupFile -Raw | ConvertFrom-Json
+        $backupEntries = Get-Content -Path $BackupFile -Raw | ConvertFrom-Json
 
-    foreach ($entry in $backupEntries) {
-        if ($entry.ValueExists -eq $true) {
-            if (-not (Test-Path $entry.Path)) {
-                New-Item -Path $entry.Path -Force | Out-Null
-            }
-
-            $type = 'DWord'
-            $originalDesired = $DesiredValues | Where-Object { $_.Path -eq $entry.Path -and $_.Name -eq $entry.Name } | Select-Object -First 1
-            if ($null -ne $originalDesired) {
-                $type = $originalDesired.Type
-            }
-
-            New-ItemProperty -Path $entry.Path -Name $entry.Name -PropertyType $type -Value $entry.Value -Force | Out-Null
-            Write-Host ("Wiederhergestellt: {0} -> {1}\{2}" -f $entry.Value, $entry.Path, $entry.Name) -ForegroundColor Green
-        }
-        else {
-            if (Test-Path $entry.Path) {
-                try {
-                    Remove-ItemProperty -Path $entry.Path -Name $entry.Name -ErrorAction Stop
-                    Write-Host ("Entfernt: {0}\{1}" -f $entry.Path, $entry.Name) -ForegroundColor Yellow
+        foreach ($entry in $backupEntries) {
+            if ($entry.ValueExists -eq $true) {
+                if (-not (Test-Path $entry.Path)) {
+                    New-Item -Path $entry.Path -Force | Out-Null
                 }
-                catch {
-                    Write-Host ("Konnte nicht entfernen: {0}\{1}" -f $entry.Path, $entry.Name) -ForegroundColor Red
+
+                $type = 'DWord'
+                $originalDesired = $DesiredValues | Where-Object { $_.Path -eq $entry.Path -and $_.Name -eq $entry.Name } | Select-Object -First 1
+                if ($null -ne $originalDesired) {
+                    $type = $originalDesired.Type
+                }
+
+                New-ItemProperty -Path $entry.Path -Name $entry.Name -PropertyType $type -Value $entry.Value -Force | Out-Null
+                Write-Host ("Wiederhergestellt: {0} -> {1}\{2}" -f $entry.Value, $entry.Path, $entry.Name) -ForegroundColor Green
+            }
+            else {
+                if (Test-Path $entry.Path) {
+                    try {
+                        Remove-ItemProperty -Path $entry.Path -Name $entry.Name -ErrorAction Stop
+                        Write-Host ("Entfernt: {0}\{1}" -f $entry.Path, $entry.Name) -ForegroundColor Yellow
+                    }
+                    catch {
+                        Write-Host ("Konnte nicht entfernen: {0}\{1}" -f $entry.Path, $entry.Name) -ForegroundColor Red
+                    }
                 }
             }
         }
+
+        Write-Host ''
+        Write-Host 'Die ursprünglichen Werte wurden aus dem Backup wiederhergestellt.' -ForegroundColor Green
+        Write-Host 'Ein Neustart wird empfohlen, aber NICHT automatisch ausgeführt.' -ForegroundColor Yellow
+        Write-Host ''
     }
-
-    Write-Host ''
-    Write-Host 'Die ursprünglichen Werte wurden aus dem Backup wiederhergestellt.' -ForegroundColor Green
-    Write-Host 'Ein Neustart wird empfohlen, aber NICHT automatisch ausgeführt.' -ForegroundColor Yellow
-    Write-Host ''
+    catch {
+        Write-Host "Fehler bei der Wiederherstellung: $_" -ForegroundColor Red
+    }
 }
 
 function Show-TargetValues {
+    # Fix für das Ausblendungsproblem
     Write-Host ''
     Write-Host 'Konfigurierte Zielwerte' -ForegroundColor Cyan
-    Write-Host ('-' * 90)
+    Write-Host ('-' * 90) -ForegroundColor Gray
+    Write-Host ''
 
-    $DesiredValues |
-        Select-Object Path, Name, Type, Value |
-        Format-Table -AutoSize
+    if ($DesiredValues.Count -eq 0) {
+        Write-Host 'Keine Zielwerte konfiguriert!' -ForegroundColor Red
+        return
+    }
+
+    # Explizite Ausgabe der Tabelle
+    $DesiredValues | Format-Table -AutoSize -Wrap | Out-String | Write-Host
 
     Write-Host ''
 }
