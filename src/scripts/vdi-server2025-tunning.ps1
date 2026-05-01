@@ -284,7 +284,7 @@ function Do-Remove {
     $valueExists = [bool]$state.ValueExists
 
     if ($valueExists -eq $false) {
-        Write-Log "Registry-Wert ist nicht vorhanden; keine Änderung erforderlich." "OK"
+        Write-Log "Registry-Wert ist nicht vorhanden; keine Aenderung erforderlich." "OK"
         return
     }
 
