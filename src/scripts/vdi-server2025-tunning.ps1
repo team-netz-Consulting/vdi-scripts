@@ -281,13 +281,16 @@ function Do-Remove {
     param()
 
     $state = Get-PrelaunchOverrideState
+    $valueExists = [bool]$state.ValueExists
 
-    if (-not $state.ValueExists) {
+    if ($valueExists -eq $false) {
         Write-Log "Registry-Wert ist nicht vorhanden; keine Änderung erforderlich." "OK"
         return
     }
 
-    if ($PSCmdlet.ShouldProcess("$RegPath\$RegName", "Remove registry value and restore Windows default behavior")) {
+    $target = Join-Path $RegPath $RegName
+
+    if ($PSCmdlet.ShouldProcess($target, "Remove registry value and restore Windows default behavior")) {
         Remove-ItemProperty -Path $RegPath -Name $RegName -Force -ErrorAction Stop
         Write-Log "Registry-Wert entfernt. Windows-Default ist wieder aktiv." "OK"
     }
