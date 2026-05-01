@@ -292,6 +292,7 @@ function Do-Remove {
     }
 }
 
+
 function Show-Menu {
     if (-not (Is-InteractiveSession)) {
         # In nicht-interaktiven Sessions nur Status ausgeben
