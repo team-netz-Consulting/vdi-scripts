@@ -281,6 +281,7 @@ function Do-Remove {
     param()
 
     $state = Get-PrelaunchOverrideState
+
     if (-not $state.ValueExists) {
         Write-Log "Registry-Wert ist nicht vorhanden; keine Änderung erforderlich." "OK"
         return
