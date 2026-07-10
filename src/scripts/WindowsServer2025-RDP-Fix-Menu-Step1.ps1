@@ -1,3 +1,4 @@
+﻿#requires -Version 5.1
 #requires -RunAsAdministrator
 <#
 .SYNOPSIS
@@ -5,7 +6,7 @@
 
 .DESCRIPTION
     Zeigt beim Start den aktuellen Status von sechs Maßnahmen an.
-    In dieser Version ist nur Schritt 1 ("Network Detection aktivieren") umgesetzt.
+    In dieser Version sind Schritt 1 bis 3 umgesetzt.
 
     Quelle der Maßnahmen:
     https://www.a6n.co.uk/2025/08/fixing-windows-server-2025-rdp-crashes.html
@@ -134,7 +135,7 @@ function Get-RdpFixStatus {
 function Show-RdpFixStatus {
     Clear-Host
     Write-Host '============================================================' -ForegroundColor Cyan
-    Write-Host ' Windows Server 2025 – RDP-Stabilitätsmaßnahmen' -ForegroundColor Cyan
+    Write-Host ' Windows Server 2025 – RDP-Stabilitätsmaßnahmen (Schritte 1-3)' -ForegroundColor Cyan
     Write-Host '============================================================' -ForegroundColor Cyan
     Write-Host
 
@@ -196,11 +197,79 @@ function Enable-NetworkDetection {
     Write-Host 'oder einem Neustart. Es wird kein RDP-Dienst automatisch neu gestartet.' -ForegroundColor Yellow
 }
 
+
+function Disable-WddmDriver {
+    Write-Host
+    Write-Host 'Schritt 2: WDDM-Grafiktreiber deaktivieren' -ForegroundColor Cyan
+
+    if (-not (Test-Path -LiteralPath $TerminalServicesPath)) {
+        New-Item -Path $TerminalServicesPath -Force | Out-Null
+    }
+
+    Set-ItemProperty -LiteralPath $TerminalServicesPath -Name 'fEnableWddmDriver' -Type DWord -Value 0 -Force
+    Set-ItemProperty -LiteralPath $TerminalServicesPath -Name 'UseWDDMDrivers' -Type DWord -Value 0 -Force
+
+    $value1 = Get-RegistryDword -Path $TerminalServicesPath -Name 'fEnableWddmDriver'
+    $value2 = Get-RegistryDword -Path $TerminalServicesPath -Name 'UseWDDMDrivers'
+
+    if (($value1 -ne 0) -or ($value2 -ne 0)) {
+        throw 'Die WDDM-Registry-Werte konnten nicht verifiziert werden.'
+    }
+
+    Write-Host 'WDDM-Grafiktreiber für RDP wurde deaktiviert.' -ForegroundColor Green
+    Write-Host "  fEnableWddmDriver = $value1" -ForegroundColor DarkGray
+    Write-Host "  UseWDDMDrivers    = $value2" -ForegroundColor DarkGray
+    Write-Host
+    Write-Host 'Ein Neustart des Servers oder der RDP-Dienste wird empfohlen.' -ForegroundColor Yellow
+}
+
+function Disable-RdpUdp {
+    Write-Host
+    Write-Host 'Schritt 3: RDP über UDP deaktivieren' -ForegroundColor Cyan
+
+    if (-not (Test-Path -LiteralPath $TerminalServicesPath)) {
+        New-Item -Path $TerminalServicesPath -Force | Out-Null
+    }
+
+    $oldValue = Get-RegistryDword -Path $TerminalServicesPath -Name 'fEnableUDP'
+
+    if ($oldValue -eq 0) {
+        Write-Host 'RDP über UDP ist bereits deaktiviert.' -ForegroundColor Green
+        return
+    }
+
+    Set-ItemProperty `
+        -LiteralPath $TerminalServicesPath `
+        -Name 'fEnableUDP' `
+        -Type DWord `
+        -Value 0 `
+        -Force
+
+    $newValue = Get-RegistryDword -Path $TerminalServicesPath -Name 'fEnableUDP'
+
+    if ($newValue -ne 0) {
+        throw 'Der Registry-Wert fEnableUDP konnte nicht verifiziert werden.'
+    }
+
+    if ($null -eq $oldValue) {
+        Write-Host 'RDP über UDP wurde deaktiviert (vorher nicht konfiguriert).' -ForegroundColor Green
+    }
+    else {
+        Write-Host "RDP über UDP wurde deaktiviert (vorheriger Wert: $oldValue)." -ForegroundColor Green
+    }
+
+    Write-Host 'Registry-Wert:' -ForegroundColor DarkGray
+    Write-Host "  $TerminalServicesPath\fEnableUDP = 0" -ForegroundColor DarkGray
+    Write-Host
+    Write-Host 'Bestehende RDP-Sitzungen werden nicht automatisch getrennt.' -ForegroundColor Yellow
+    Write-Host 'Die Änderung greift spätestens nach Neustart der RDP-Dienste oder des Servers.' -ForegroundColor Yellow
+}
+
 function Show-Menu {
     Write-Host 'Menü' -ForegroundColor White
     Write-Host '  [1] Schritt 1 – Network Detection aktivieren'
-    Write-Host '  [2] Schritt 2 – noch nicht implementiert' -ForegroundColor DarkGray
-    Write-Host '  [3] Schritt 3 – noch nicht implementiert' -ForegroundColor DarkGray
+    Write-Host '  [2] Schritt 2 – WDDM-Grafiktreiber deaktivieren'
+    Write-Host '  [3] Schritt 3 – RDP über UDP deaktivieren'
     Write-Host '  [4] Schritt 4 – noch nicht implementiert' -ForegroundColor DarkGray
     Write-Host '  [5] Schritt 5 – noch nicht implementiert' -ForegroundColor DarkGray
     Write-Host '  [6] Schritt 6 – noch nicht implementiert' -ForegroundColor DarkGray
@@ -229,7 +298,33 @@ do {
             [void](Read-Host 'Enter drücken, um zum Menü zurückzukehren')
         }
 
-        { $_ -in @('2', '3', '4', '5', '6') } {
+        '2' {
+            try {
+                Disable-WddmDriver
+            }
+            catch {
+                Write-Host
+                Write-Host "Fehler: $($_.Exception.Message)" -ForegroundColor Red
+            }
+
+            Write-Host
+            [void](Read-Host 'Enter drücken, um zum Menü zurückzukehren')
+        }
+
+        '3' {
+            try {
+                Disable-RdpUdp
+            }
+            catch {
+                Write-Host
+                Write-Host "Fehler: $($_.Exception.Message)" -ForegroundColor Red
+            }
+
+            Write-Host
+            [void](Read-Host 'Enter drücken, um zum Menü zurückzukehren')
+        }
+
+        { $_ -in @('4', '5', '6') } {
             Write-Host
             Write-Host "Schritt $selection ist in dieser Version noch nicht implementiert." -ForegroundColor Yellow
             Write-Host
@@ -252,8 +347,3 @@ do {
     }
 }
 while ($selection -ne 'Q')
-'''
-
-path = Path('/mnt/data/WindowsServer2025-RDP-Fix-Menu-Step1.ps1')
-path.write_text(script, encoding='utf-8-sig')
-print(f"Erstellt: {path}")
