@@ -1,6 +1,3 @@
-from pathlib import Path
-
-script = r'''#requires -Version 5.1
 #requires -RunAsAdministrator
 <#
 .SYNOPSIS
