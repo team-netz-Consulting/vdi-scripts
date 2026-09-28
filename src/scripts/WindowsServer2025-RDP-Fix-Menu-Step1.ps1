@@ -5,8 +5,8 @@
     Menügestützte Konfiguration für Windows Server 2025 RDP-Stabilitätsmaßnahmen.
 
 .DESCRIPTION
-    Zeigt beim Start den aktuellen Status von sechs Maßnahmen an.
-    In dieser Version sind Schritt 1 bis 3 umgesetzt.
+    Zeigt beim Start den aktuellen Status von acht Maßnahmen an.
+    Umgesetzt sind Schritte 1 bis 3, RDS-Lizenzierung (7) und Suchkatalog (8).
 
     Quelle der Maßnahmen:
     https://www.a6n.co.uk/2025/08/fixing-windows-server-2025-rdp-crashes.html
@@ -16,6 +16,7 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 $TerminalServicesPath = 'HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services'
+$WindowsSearchPath = 'HKLM:\SOFTWARE\Microsoft\Windows Search'
 
 function Write-StatusLine {
     param(
@@ -57,6 +58,20 @@ function Get-RegistryDword {
     }
 }
 
+function Get-RegistryString {
+    param(
+        [Parameter(Mandatory)][string]$Path,
+        [Parameter(Mandatory)][string]$Name
+    )
+
+    if (-not (Test-Path -LiteralPath $Path)) { return $null }
+    try {
+        $item = Get-ItemProperty -LiteralPath $Path -Name $Name -ErrorAction Stop
+        return [string]$item.$Name
+    }
+    catch { return $null }
+}
+
 function Get-RdpFixStatus {
     $networkDetection = Get-RegistryDword -Path $TerminalServicesPath -Name 'fEnableNetworkDetection'
     $wddmDriver      = Get-RegistryDword -Path $TerminalServicesPath -Name 'fEnableWddmDriver'
@@ -66,12 +81,34 @@ function Get-RdpFixStatus {
     $remoteFx        = Get-RegistryDword -Path $TerminalServicesPath -Name 'bEnableRemoteFXAdvancedRemoteApp'
     $softwareRender  = Get-RegistryDword -Path $TerminalServicesPath -Name 'fEnableSoftwareRendering'
 
+    $licensingMode = Get-RegistryDword -Path $TerminalServicesPath -Name 'LicensingMode'
+    $licenseServer = Get-RegistryString -Path $TerminalServicesPath -Name 'LicenseServers'
+    $perUserCatalog = Get-RegistryDword -Path $WindowsSearchPath -Name 'EnablePerUserCatalog'
+
     $serviceNames = @('TermService', 'SessionEnv', 'UmRdpService')
     $services = foreach ($serviceName in $serviceNames) {
         Get-Service -Name $serviceName -ErrorAction SilentlyContinue
     }
 
     [pscustomobject]@{
+        Licensing = if (($licensingMode -in @(2, 4)) -and -not [string]::IsNullOrWhiteSpace($licenseServer)) {
+            $modeName = if ($licensingMode -eq 4) { 'User' } else { 'Device' }
+            @{ Text = "$modeName | Server: $licenseServer"; Color = 'Green' }
+        }
+        else {
+            @{ Text = "Nicht vollständig konfiguriert (Modus: $licensingMode; Server: $licenseServer)"; Color = 'Yellow' }
+        }
+
+        PerUserCatalog = if ($perUserCatalog -eq 1) {
+            @{ Text = 'Aktiviert'; Color = 'Green' }
+        }
+        elseif ($null -eq $perUserCatalog) {
+            @{ Text = 'Nicht konfiguriert'; Color = 'Yellow' }
+        }
+        else {
+            @{ Text = "Nicht aktiviert (Wert: $perUserCatalog)"; Color = 'Yellow' }
+        }
+
         NetworkDetection = if ($networkDetection -eq 1) {
             @{ Text = 'Aktiv'; Color = 'Green' }
         }
@@ -135,7 +172,7 @@ function Get-RdpFixStatus {
 function Show-RdpFixStatus {
     Clear-Host
     Write-Host '============================================================' -ForegroundColor Cyan
-    Write-Host ' Windows Server 2025 – RDP-Stabilitätsmaßnahmen (Schritte 1-3)' -ForegroundColor Cyan
+    Write-Host ' Windows Server 2025 – RDP-/VDI-Konfiguration' -ForegroundColor Cyan
     Write-Host '============================================================' -ForegroundColor Cyan
     Write-Host
 
@@ -149,6 +186,9 @@ function Show-RdpFixStatus {
     Write-StatusLine 6 'RDP-Dienste neu starten'    $status.Services.Text            $status.Services.Color
 
     Write-Host
+    Write-StatusLine 7 'RDS-Lizenzierung' $status.Licensing.Text $status.Licensing.Color
+    Write-StatusLine 8 'Suchkatalog pro Benutzer' $status.PerUserCatalog.Text $status.PerUserCatalog.Color
+
     Write-Host 'Hinweis: Bei Schritt 5 und 6 lässt sich nur der aktuelle Zustand,' -ForegroundColor DarkGray
     Write-Host 'nicht sicher eine frühere Ausführung nachweisen.' -ForegroundColor DarkGray
     Write-Host
@@ -265,6 +305,62 @@ function Disable-RdpUdp {
     Write-Host 'Die Änderung greift spätestens nach Neustart der RDP-Dienste oder des Servers.' -ForegroundColor Yellow
 }
 
+function Set-RdsLicensing {
+    Write-Host
+    Write-Host 'Schritt 7: RDS-Lizenzierung konfigurieren' -ForegroundColor Cyan
+    Write-Host 'User = pro Benutzer (4), Device = pro Gerät (2); Q = Abbrechen'
+
+    do {
+        $modeInput = (Read-Host 'Lizenzmodus (User/Device)').Trim().ToUpperInvariant()
+        if ($modeInput -eq 'Q') { return }
+        $mode = switch ($modeInput) {
+            'USER'   { 4 }
+            'DEVICE' { 2 }
+            default  { $null }
+        }
+        if ($null -eq $mode) {
+            Write-Host 'Bitte User oder Device eingeben.' -ForegroundColor Yellow
+        }
+    } while ($null -eq $mode)
+
+    do {
+        $server = (Read-Host 'Lizenzserver (Hostname/FQDN, Q = Abbrechen)').Trim()
+        if ($server -eq 'Q') { return }
+        $validServer = $server -match '^(?=.{1,253}$)[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$'
+        if (-not $validServer) {
+            Write-Host 'Bitte einen gültigen Hostnamen oder FQDN eingeben.' -ForegroundColor Yellow
+        }
+    } while (-not $validServer)
+
+    if (-not (Test-Path -LiteralPath $TerminalServicesPath)) {
+        New-Item -Path $TerminalServicesPath -Force | Out-Null
+    }
+    Set-ItemProperty -LiteralPath $TerminalServicesPath -Name 'LicensingMode' -Type DWord -Value $mode -Force
+    Set-ItemProperty -LiteralPath $TerminalServicesPath -Name 'LicenseServers' -Type String -Value $server -Force
+
+    $savedMode = Get-RegistryDword -Path $TerminalServicesPath -Name 'LicensingMode'
+    $savedServer = Get-RegistryString -Path $TerminalServicesPath -Name 'LicenseServers'
+    if (($savedMode -ne $mode) -or ($savedServer -ne $server)) {
+        throw 'Die RDS-Lizenzkonfiguration konnte nicht verifiziert werden.'
+    }
+    Write-Host "RDS-Lizenzierung gesetzt: $modeInput ($mode), Lizenzserver: $server" -ForegroundColor Green
+}
+
+function Enable-PerUserCatalog {
+    Write-Host
+    Write-Host 'Schritt 8: Windows-Suchkatalog pro Benutzer aktivieren' -ForegroundColor Cyan
+
+    if (-not (Test-Path -LiteralPath $WindowsSearchPath)) {
+        New-Item -Path $WindowsSearchPath -Force | Out-Null
+    }
+    Set-ItemProperty -LiteralPath $WindowsSearchPath -Name 'EnablePerUserCatalog' -Type DWord -Value 1 -Force
+
+    if ((Get-RegistryDword -Path $WindowsSearchPath -Name 'EnablePerUserCatalog') -ne 1) {
+        throw 'Der Registry-Wert EnablePerUserCatalog konnte nicht verifiziert werden.'
+    }
+    Write-Host 'Suchkatalog pro Benutzer aktiviert: EnablePerUserCatalog = 1 (REG_DWORD).' -ForegroundColor Green
+}
+
 function Show-Menu {
     Write-Host 'Menü' -ForegroundColor White
     Write-Host '  [1] Schritt 1 – Network Detection aktivieren'
@@ -273,6 +369,8 @@ function Show-Menu {
     Write-Host '  [4] Schritt 4 – noch nicht implementiert' -ForegroundColor DarkGray
     Write-Host '  [5] Schritt 5 – noch nicht implementiert' -ForegroundColor DarkGray
     Write-Host '  [6] Schritt 6 – noch nicht implementiert' -ForegroundColor DarkGray
+    Write-Host '  [7] RDS-Lizenzmodus und Lizenzserver konfigurieren'
+    Write-Host '  [8] Windows-Suchkatalog pro Benutzer aktivieren'
     Write-Host '  [R] Status aktualisieren'
     Write-Host '  [Q] Beenden'
     Write-Host
@@ -327,6 +425,19 @@ do {
         { $_ -in @('4', '5', '6') } {
             Write-Host
             Write-Host "Schritt $selection ist in dieser Version noch nicht implementiert." -ForegroundColor Yellow
+            Write-Host
+            [void](Read-Host 'Enter drücken, um zum Menü zurückzukehren')
+        }
+
+        { $_ -in @('7', '8') } {
+            try {
+                if ($selection -eq '7') { Set-RdsLicensing }
+                else { Enable-PerUserCatalog }
+            }
+            catch {
+                Write-Host "Fehler: $($_.Exception.Message)" -ForegroundColor Red
+            }
+
             Write-Host
             [void](Read-Host 'Enter drücken, um zum Menü zurückzukehren')
         }
