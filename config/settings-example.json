@@ -13,6 +13,18 @@
 
   "categories": [
     {
+      "key": "WindowsUpdate",
+      "name": "Windows Update",
+      "items": [
+        {
+          "key": "Disable",
+          "name": "Automatische Windows-Updates deaktivieren",
+          "script": "disable-windows-update.ps1",
+          "args": ["-NonInteractive"]
+        }
+      ]
+    },
+    {
       "key": "Calculator",
       "name": "Calculator",
       "items": [

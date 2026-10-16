@@ -147,6 +147,19 @@ Kein Download, nur Auflisten / Logging / optional Export
 
 .\get-appx-url.ps1 -StoreUrl "https://apps.microsoft.com/detail/9wzdncrfhvn5" -Verbose
 
+## Windows Update
+
+Die Beispielkonfiguration enthaelt den Menuepunkt **Windows Update > Automatische
+Windows-Updates deaktivieren** (Action `WindowsUpdate.Disable`). Den entsprechenden
+Kategorieblock aus `config/settings-example.json` in die aktive
+`config/settings.json` uebernehmen; bei einer neuen Installation kann die
+Beispielkonfiguration als `settings.json` kopiert werden.
+
+Das Skript `src/scripts/disable-windows-update.ps1` erstellt mit Administratorrechten
+`HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU` und setzt
+`NoAutoUpdate=1` als `REG_DWORD`. Manuelle Updates bleiben moeglich.
+Mit `-WhatIf` laesst sich die Aenderung ohne Registry-Zugriff vorab anzeigen.
+
 ## Logging
 
 - Logs befinden sich unter:
